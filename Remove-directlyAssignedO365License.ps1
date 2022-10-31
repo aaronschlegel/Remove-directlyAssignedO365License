@@ -33,18 +33,18 @@ History:
 function Remove-O365DirectAssignedLicense {
     [CmdletBinding()]
     param(
-        [Parameter(ParameterSetName='FileInput')]
+        [Parameter(ParameterSetName = 'FileInput')]
         [ValidateScript({
-            if( -Not ($_ | Test-Path) ){
-                throw "File or folder does not exist"
-            }
-            return $true
-        })]
+                if ( -Not ($_ | Test-Path) ) {
+                    throw "File or folder does not exist"
+                }
+                return $true
+            })]
         [System.IO.FileInfo]$userUPNFilePath,
-        [Parameter(ParameterSetName='SingleUser')]
+        [Parameter(ParameterSetName = 'SingleUser')]
         [ValidateNotNullOrEmpty()]
         [string]$user,
-        [Parameter(ParameterSetName='AllUsers')]
+        [Parameter(ParameterSetName = 'AllUsers')]
         [switch]$processAllUsers
     )
 
@@ -57,14 +57,15 @@ function Remove-O365DirectAssignedLicense {
     Import-Module Microsoft.Graph.Users.Actions
 
 
-try{
+    try {
 
-    Connect-Graph -Scopes User.ReadWrite.All, Organization.Read.All
+        Connect-Graph -Scopes User.ReadWrite.All, Organization.Read.All
 
-}catch{
-    
-    write-host -ForegroundColor Red "Error connecting to Graph $_"
-}
+    }
+    catch {
+
+        write-host -ForegroundColor Red "Error connecting to Graph $_"
+    }
 
     $allSkus = Get-MgSubscribedSku -all | select -exp skupartnumber
     $allUsers = $Null 
@@ -133,7 +134,7 @@ try{
 
 
 
-        $userDisabledPlans = $userLicense.ServicePlans | ?{ $_.ProvisioningStatus -eq "Disabled" } | Select -ExpandProperty ServicePlanId
+        $userDisabledPlans = $userLicense.ServicePlans | ? { $_.ProvisioningStatus -eq "Disabled" } | Select -ExpandProperty ServicePlanId
         if ($userLicense.Id.count -gt 0) {
 
 
@@ -145,7 +146,7 @@ try{
 
             $newDisabledPlans = $Null 
 
-            $newDisabledPlans = $skuInfo.ServicePlans | ?{ $_.ServicePlanName -in ($servicePlanToRemove) } | Select -ExpandProperty ServicePlanId
+            $newDisabledPlans = $skuInfo.ServicePlans | ? { $_.ServicePlanName -in ($servicePlanToRemove) } | Select -ExpandProperty ServicePlanId
 
             if ($null -ne $newDisabledPlans) {
 
@@ -161,13 +162,14 @@ try{
                 )
                 write-host -ForegroundColor Cyan "Setting disabled Plans $($addLicenses.disabledPlans)"
                 ## Update user's license
-                try{
-                Set-MgUserLicense -UserId $o365User -AddLicenses $addLicenses -RemoveLicenses @()
+                try {
+                    Set-MgUserLicense -UserId $o365User -AddLicenses $addLicenses -RemoveLicenses @()
 
-                $processedUsers += $o365User
-                }catch{
+                    $processedUsers += $o365User
+                }
+                catch {
 
-                write-host -ForegroundColor Red "Error removing license for $o365User $_"
+                    write-host -ForegroundColor Red "Error removing license for $o365User $_"
                 }
 
             }
