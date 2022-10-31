@@ -1,7 +1,50 @@
+<#
+.SYNOPSIS
+Remove-directlyAssignedO365License.ps1 - Remove directly assinged office 365 license from users.
+.DESCRIPTION
+Remove licenses which were not assigned by group based licensing from o365 users.
+
+Script takes users to process as input, then will pull the licenses which exist in the tenant 
+then prompt for input of which SKU and which entitlement are to be removed.
+.EXAMPLE
+Remove-directlyAssignedO365License -userUPNFilePath "C:\usersToRemoveUPNs.txt"
+Remove license from all users in txt file
+
+Remove-directlyAssignedO365License -processAllUsers
+Process all users in O365 tenant and remove the license if found.
+.PARAMETER userUPNFilePath
+Path to a txt file containing UserPrincipalNames of users which to remove license from.
+.PARAMETER user
+User pincipalname of a single user to remove license from.
+.PARAMETER processAllUsers
+Process all users in o365 tenenat
+.OUTPUTS
+Array
+#Returns array of all users successfully processed.
+.NOTES
+Version:          1.0
+Author:           Aaron Schlegel
+Creation Date:    10-31-2022
+History:
+    10-31-2022, 1.0, Remove-directlyAssignedO365License.ps1, Initial Creation
+#>
+
+
 function Remove-O365DirectAssignedLicense {
+    [CmdletBinding()]
     param(
-        [string]$userUPNFilePath,
+        [Parameter(ParameterSetName='FileInput')]
+        [ValidateScript({
+            if( -Not ($_ | Test-Path) ){
+                throw "File or folder does not exist"
+            }
+            return $true
+        })]
+        [System.IO.FileInfo]$userUPNFilePath,
+        [Parameter(ParameterSetName='SingleUser')]
+        [ValidateNotNullOrEmpty()]
         [string]$user,
+        [Parameter(ParameterSetName='AllUsers')]
         [switch]$processAllUsers
     )
 
@@ -20,6 +63,7 @@ function Remove-O365DirectAssignedLicense {
     $allSkus = Get-MgSubscribedSku -all | select -exp skupartnumber
     $allUsers = $Null 
 
+    $processedUsers = @()
 
     if ($user) {
         $allusers = $user 
@@ -111,7 +155,14 @@ function Remove-O365DirectAssignedLicense {
                 )
                 write-host -ForegroundColor Cyan "Setting disabled Plans $($addLicenses.disabledPlans)"
                 ## Update user's license
+                try{
                 Set-MgUserLicense -UserId $o365User -AddLicenses $addLicenses -RemoveLicenses @()
+
+                $processedUsers += $o365User
+                }catch{
+
+                write-host -ForegroundColor Red "Error removing license for $o365User $_"
+                }
 
             }
             else {
@@ -126,5 +177,6 @@ function Remove-O365DirectAssignedLicense {
         }
 
     }
+    return $processedUser
 
 }
