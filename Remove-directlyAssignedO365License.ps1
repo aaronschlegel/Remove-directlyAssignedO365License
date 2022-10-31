@@ -185,6 +185,6 @@ function Remove-O365DirectAssignedLicense {
         }
 
     }
-    return $processedUser
+    return $processedUsers
 
 }
