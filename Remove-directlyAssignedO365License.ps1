@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Remove-directlyAssignedO365License.ps1 - Remove directly assinged office 365 license from users.
+Remove-directlyAssignedO365License.ps1 - Remove directly assigned Office 365 license from users.
 .DESCRIPTION
 Remove licenses which were not assigned by group based licensing from o365 users.
 
@@ -17,7 +17,7 @@ Path to a txt file containing UserPrincipalNames of users which to remove licens
 .PARAMETER user
 User pincipalname of a single user to remove license from.
 .PARAMETER processAllUsers
-Process all users in o365 tenenat
+Process all users in o365 tenant
 .OUTPUTS
 Array
 #Returns array of all users successfully processed.
@@ -57,8 +57,14 @@ function Remove-O365DirectAssignedLicense {
     Import-Module Microsoft.Graph.Users.Actions
 
 
+try{
 
     Connect-Graph -Scopes User.ReadWrite.All, Organization.Read.All
+
+}catch{
+    
+    write-host -ForegroundColor Red "Error connecting to Graph $_"
+}
 
     $allSkus = Get-MgSubscribedSku -all | select -exp skupartnumber
     $allUsers = $Null 
